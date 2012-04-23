@@ -5,7 +5,8 @@ import java.lang.instrument.Instrumentation;
 public class Agent {
 
     private static Instrumentation instrumentation;
-    private static String regex;
+    private static String callbackClass = TimingLoggingCallback.class.getName();
+    private static String[] regexs;
 
     /**
      * JVM hook to statically load the javaagent at startup.
@@ -18,9 +19,9 @@ public class Agent {
      * @throws Exception
      */
     public static void premain(String args, Instrumentation inst) throws Exception {
+    	processArgs(args);
         instrumentation = inst;
-        instrumentation.addTransformer(new ClassInstrumenter());
-        regex = args;
+        instrumentation.addTransformer(new ClassInstrumenter(regexs));
     }
 
     /**
@@ -34,12 +35,37 @@ public class Agent {
      * @throws Exception
      */
     public static void agentmain(String args, Instrumentation inst) throws Exception {
-        instrumentation = inst;
-        instrumentation.addTransformer(new ClassInstrumenter());
-        regex = args;
+    	processArgs(args);
+    	instrumentation = inst;
+        instrumentation.addTransformer(new ClassInstrumenter(regexs));
     }
 
-	public static String getRegex() {
-		return regex;
+    /**
+     * Parses the argument supplied to the javaagent to work out the class
+     * to use for the callback, and the regex for the classes to instrument
+     * 
+     * The argument is in the format:
+     * 	[callback-class;]regex1[,regex2,regex3...]
+     * 
+     * @param args Arguments supplied to javaagent
+     */
+    private static void processArgs(String args) {
+    	if (args == null || args.length() == 0) {
+    		return;
+    	}
+    	
+    	String regex = args;
+    	
+    	if (args.contains(";")) {
+    		int pos = args.indexOf(";");
+    		callbackClass = args.substring(0, pos);
+    		regex = args.substring(pos);
+    	}
+    	
+    	regexs = regex.split(",");
+    }
+
+	public static String getCallbackClass() {
+		return callbackClass;
 	}
 }

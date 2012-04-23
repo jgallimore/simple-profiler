@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.security.ProtectionDomain;
+import java.util.regex.Pattern;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -15,6 +16,8 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.AdviceAdapter;
 
 public class ClassInstrumenter implements ClassFileTransformer {
+
+	private final String[] regexs;
 
 	public static class ModifierMethodWriter extends AdviceAdapter {
 
@@ -82,6 +85,10 @@ public class ClassInstrumenter implements ClassFileTransformer {
 		}
 	}
 
+	public ClassInstrumenter(String[] regexs) {
+		this.regexs = regexs;
+	}
+
 	public byte[] instrument(InputStream is) throws IOException {
 		ClassReader classReader = new ClassReader(is);
 		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
@@ -92,15 +99,17 @@ public class ClassInstrumenter implements ClassFileTransformer {
 	}
 
 	public byte[] transform(ClassLoader cl, String name, Class<?> cls, ProtectionDomain protectionDomain, byte[] buffer) throws IllegalClassFormatException {
-		if (! name.contains("Test")) {
-			return buffer;
+		for (String regex : regexs) {
+			if (Pattern.matches(regex, name)) {
+				try {
+					InputStream is = new ByteArrayInputStream(buffer);
+					return instrument(is);
+				} catch (IOException e) {
+					throw new IllegalClassFormatException(e.getMessage());
+				}
+			}
 		}
 		
-		try {
-			InputStream is = new ByteArrayInputStream(buffer);
-			return instrument(is);
-		} catch (IOException e) {
-			throw new IllegalClassFormatException(e.getMessage());
-		}
+		return buffer;
 	}
 }

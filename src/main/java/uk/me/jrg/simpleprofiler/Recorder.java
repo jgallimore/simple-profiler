@@ -8,7 +8,6 @@ public class Recorder {
 	
 	// prevent direct instantiation
 	private Recorder() {
-		
 	}
 	
 	public static Recorder getInstance() {
@@ -16,7 +15,8 @@ public class Recorder {
 	}
 	
 	public void methodStarted(String className, String method) {
-		Callback callback = new TimingLoggingCallback();
+		Callback callback = createNewCallbackInstance();
+		
 		Stack<Callback> stack = context.get();
 		if (stack == null) {
 			stack = new Stack<Callback>();
@@ -24,9 +24,23 @@ public class Recorder {
 		
 		stack.push(callback);
 		context.set(stack);
-		callback.methodStarted(className, method);
+		
+		if (callback != null) {
+			callback.methodStarted(className, method);	
+		}
 	}
 	
+	private Callback createNewCallbackInstance() {
+		try {
+			Class<?> cls = Class.forName(Agent.getCallbackClass());
+			Object instance = cls.newInstance();
+			
+			return (Callback) instance;
+		} catch (Throwable e) {
+			return null;
+		}
+	}
+
 	public void methodComplete(String className, String method) {
 		Stack<Callback> stack = context.get();
 		if (stack == null) {
