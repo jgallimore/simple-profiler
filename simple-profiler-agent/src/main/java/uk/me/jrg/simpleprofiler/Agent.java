@@ -59,7 +59,7 @@ public class Agent {
     	if (args.contains(";")) {
     		int pos = args.indexOf(";");
     		callbackClass = args.substring(0, pos);
-    		regex = args.substring(pos);
+    		regex = args.substring(pos + 1);
     	}
     	
     	regexs = regex.split(",");
