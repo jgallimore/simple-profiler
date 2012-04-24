@@ -94,7 +94,7 @@ public class ClassInstrumenter implements ClassFileTransformer {
 		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
 
 		ModifierClassWriter mcw = new ModifierClassWriter(Opcodes.ASM4, cw);
-		classReader.accept(mcw, 0);
+		classReader.accept(mcw, ClassReader.EXPAND_FRAMES);
 		return cw.toByteArray();
 	}
 
