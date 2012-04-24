@@ -16,7 +16,6 @@
 
   <modules>
     <module>simple-profiler-agent</module>
-    <module>profiler-timeout-logger</module>
   </modules>
 
 </project>
